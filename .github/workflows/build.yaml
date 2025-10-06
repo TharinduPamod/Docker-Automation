@@ -37,13 +37,13 @@ jobs:
           echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
 
       # Step 3: Reconfigure AWS credentials using fetched secret
-      - name: Configure AWS Credentials (from Secrets Manager)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::660530417788:role/github-actions-ecr-role
-          aws-region: us-east-2
-          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+      #      - name: Configure AWS Credentials (from Secrets Manager)
+      #  uses: aws-actions/configure-aws-credentials@v4
+      #  with:
+      #    role-to-assume: arn:aws:iam::660530417788:role/github-actions-ecr-role
+      #    aws-region: us-east-2
+      #    aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+      #    aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
 
       # Step 4: Login to Amazon ECR
       - name: Login to Amazon ECR
