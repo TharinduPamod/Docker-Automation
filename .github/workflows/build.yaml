@@ -1,0 +1,65 @@
+name: Build and Push Docker image to ECR
+
+on: push
+
+jobs:
+  push_to_ecr:
+    name: Push Docker image to ECR
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      # Step 1: Configure temporary AWS credentials (to access Secrets Manager)
+      - name: Configure AWS Credentials (for fetching secret)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Step 2: Retrieve AWS credentials from Secrets Manager
+      - name: Retrieve AWS credentials from Secrets Manager
+        id: get_secret
+        run: |
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id my-secret-name --query SecretString --output text)
+          AWS_ACCESS_KEY_ID=$(echo $SECRET_JSON | jq -r '.AWS_ACCESS_KEY_ID')
+          AWS_SECRET_ACCESS_KEY=$(echo $SECRET_JSON | jq -r '.AWS_SECRET_ACCESS_KEY')
+
+          echo "AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID" >> $GITHUB_ENV
+          echo "AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY" >> $GITHUB_ENV
+
+      # Step 3: Reconfigure AWS credentials using fetched secret
+      - name: Configure AWS Credentials (from Secrets Manager)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      # Step 4: Login to Amazon ECR
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Step 5: Set short SHA
+      - name: Set short SHA
+        id: vars
+        run: echo "SHORT_SHA=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_ENV
+
+      # Step 6: Build and push Docker image
+      - name: Build and push Docker image
+        run: |
+          ECR_REGISTRY=${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY="github-with-ecr"
+          IMAGE_TAG=${{ env.SHORT_SHA }}
+
+          echo "Building image..."
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+          echo "Pushing both tags..."
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
