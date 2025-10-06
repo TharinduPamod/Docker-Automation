@@ -29,7 +29,7 @@ jobs:
       - name: Retrieve AWS credentials from Secrets Manager
         id: get_secret
         run: |
-          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id my-secret-name --query SecretString --output text)
+          SECRET_JSON=$(aws secretsmanager get-secret-value --secret-id AWS_credentials --query SecretString --output text)
           AWS_ACCESS_KEY_ID=$(echo $SECRET_JSON | jq -r '.AWS_ACCESS_KEY_ID')
           AWS_SECRET_ACCESS_KEY=$(echo $SECRET_JSON | jq -r '.AWS_SECRET_ACCESS_KEY')
 
