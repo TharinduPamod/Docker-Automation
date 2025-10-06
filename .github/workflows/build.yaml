@@ -7,6 +7,11 @@ jobs:
     name: Push Docker image to ECR
     runs-on: ubuntu-latest
 
+    #Allow GitHub to request an ID token for OIDC
+    permissions:
+      id-token: write
+      contents: read
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
